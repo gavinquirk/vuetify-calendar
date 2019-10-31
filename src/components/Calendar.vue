@@ -78,7 +78,13 @@
               </form>
             </v-card-text>
             <v-card-actions>
-              <v-btn text color="secondary" @click="selectedOpen = false">Cancel</v-btn>
+              <v-btn text color="secondary" @click="selectedOpen = false">Close</v-btn>
+              <v-btn
+                text
+                v-if="currentlyEditing !== selectedEvent.id"
+                @click.prevent="editEvent(selectedEvent)"
+              >Edit</v-btn>
+              <v-btn text v-else @click.prevent="updateEvent(selectedEvent)">Save</v-btn>
             </v-card-actions>
           </v-card>
         </v-menu>
@@ -164,6 +170,25 @@ export default {
       });
       this.events = events;
     },
+    async updateEvent(ev) {
+      await db
+        .collection("calEvent")
+        .doc(this.currentlyEditing)
+        .update({
+          details: ev.details
+        });
+      this.selectedOpen = false;
+      this.currentlyEditing = null;
+    },
+    async deleteEvent(ev) {
+      await db
+        .collection("calEvent")
+        .doc(ev)
+        .delete();
+
+      this.selectedOpen = false;
+      this.getEvents();
+    },
     viewDay({ date }) {
       this.focus = date;
       this.type = "day";
@@ -179,6 +204,9 @@ export default {
     },
     next() {
       this.$refs.calendar.next();
+    },
+    editEvent(ev) {
+      this.currentlyEditing = ev.id;
     },
     showEvent({ nativeEvent, event }) {
       const open = () => {
